@@ -11,6 +11,7 @@ from ..config import settings
 from .openai_adapter import OpenAIAdapter
 from .google_adapter import GoogleAdapter
 from .anthropic_adapter import AnthropicAdapter
+from .storage_service import storage_service
 
 
 class ChatService:
@@ -18,11 +19,17 @@ class ChatService:
     
     def __init__(self):
         self.conversations: Dict[str, Conversation] = {}
-        self.model_adapters = {
-            ModelProvider.OPENAI: OpenAIAdapter(settings.openai_api_key),
-            ModelProvider.GOOGLE: GoogleAdapter(settings.google_api_key),
-            ModelProvider.ANTHROPIC: AnthropicAdapter(settings.anthropic_api_key)
-        }
+        self.model_adapters = {}
+        
+        # Initialize adapters only if API keys are provided
+        if settings.openai_api_key:
+            self.model_adapters[ModelProvider.OPENAI] = OpenAIAdapter(settings.openai_api_key)
+        if settings.google_api_key:
+            self.model_adapters[ModelProvider.GOOGLE] = GoogleAdapter(settings.google_api_key)
+        if settings.anthropic_api_key:
+            self.model_adapters[ModelProvider.ANTHROPIC] = AnthropicAdapter(settings.anthropic_api_key)
+        
+        self.storage = storage_service
     
     def get_available_models(self) -> List[ModelInfo]:
         """Get all available models from all providers."""
@@ -41,27 +48,30 @@ class ChatService:
     
     def create_conversation(self, title: str = None) -> Conversation:
         """Create a new conversation."""
-        conversation_id = str(uuid.uuid4())
-        if not title:
-            title = f"Chat {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+        # Create storage session
+        session = self.storage.create_session(title)
         
         conversation = Conversation(
-            id=conversation_id,
-            title=title,
+            id=session.session_id,
+            title=session.title,
             messages=[],
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            created_at=session.created_at,
+            updated_at=session.last_activity
         )
         
-        self.conversations[conversation_id] = conversation
+        self.conversations[session.session_id] = conversation
         return conversation
     
     def delete_conversation(self, conversation_id: str) -> bool:
         """Delete a conversation."""
+        # Delete from storage
+        success = self.storage.delete_session(conversation_id)
+        
+        # Delete from memory
         if conversation_id in self.conversations:
             del self.conversations[conversation_id]
-            return True
-        return False
+        
+        return success
     
     async def send_message(self, request: ChatRequest) -> ChatResponse:
         """Send a message and get AI response."""
@@ -83,7 +93,10 @@ class ChatService:
             # Get appropriate model adapter
             adapter = self.model_adapters.get(request.model_provider)
             if not adapter:
-                raise ValueError(f"Unsupported model provider: {request.model_provider}")
+                if request.model_provider not in [ModelProvider.OPENAI, ModelProvider.GOOGLE, ModelProvider.ANTHROPIC]:
+                    raise ValueError(f"Unsupported model provider: {request.model_provider}")
+                else:
+                    raise ValueError(f"API key not configured for {request.model_provider}. Please add the API key to your .env file.")
             
             # Validate model
             if not adapter.validate_model(request.model_name):
@@ -109,6 +122,13 @@ class ChatService:
             
             # Update conversation timestamp
             conversation.updated_at = datetime.utcnow()
+            
+            # Store chat record in JSON format
+            self.storage.store_chat_record(
+                user_text=request.message,
+                response_text=ai_response["content"],
+                session_id=conversation.id
+            )
             
             # Return response
             return ChatResponse(

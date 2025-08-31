@@ -9,10 +9,10 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     """Application settings."""
     
-    # API Keys
-    openai_api_key: str = Field(..., env="OPENAI_API_KEY")
-    google_api_key: str = Field(..., env="GOOGLE_API_KEY")
-    anthropic_api_key: str = Field(..., env="ANTHROPIC_API_KEY")
+    # API Keys (optional for testing)
+    openai_api_key: str = Field(default="", env="OPENAI_API_KEY")
+    google_api_key: str = Field(default="", env="GOOGLE_API_KEY")
+    anthropic_api_key: str = Field(default="", env="ANTHROPIC_API_KEY")
     
     # Server Configuration
     host: str = Field(default="0.0.0.0", env="HOST")

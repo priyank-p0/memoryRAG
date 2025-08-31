@@ -1,11 +1,13 @@
 """Chat API endpoints."""
 
-from typing import List
-from fastapi import APIRouter, HTTPException, status
+from typing import List, Optional
+from fastapi import APIRouter, HTTPException, status, Query
 from ..models.chat import (
     ChatRequest, ChatResponse, Conversation, ModelInfo, ErrorResponse
 )
+from ..models.storage import ChatRecord, ChatSession
 from ..services.chat_service import chat_service
+from ..services.storage_service import storage_service
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -135,6 +137,75 @@ async def get_available_models():
     try:
         models = chat_service.get_available_models()
         return models
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+# Storage-related endpoints
+@router.get("/sessions", response_model=List[ChatSession])
+async def get_all_sessions():
+    """Get all chat sessions."""
+    try:
+        sessions = storage_service.get_all_sessions()
+        return sessions
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+@router.get("/sessions/{session_id}/records", response_model=List[ChatRecord])
+async def get_session_records(session_id: str):
+    """Get all chat records for a specific session."""
+    try:
+        records = storage_service.get_session_records(session_id)
+        return records
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+@router.get("/records", response_model=List[ChatRecord])
+async def get_all_records():
+    """Get all chat records."""
+    try:
+        records = storage_service.get_all_records()
+        return records
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+@router.get("/search", response_model=List[ChatRecord])
+async def search_records(
+    query: str = Query(..., description="Search query"),
+    session_id: Optional[str] = Query(None, description="Optional session ID to filter by")
+):
+    """Search chat records by text content."""
+    try:
+        records = storage_service.search_records(query, session_id)
+        return records
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+@router.get("/stats")
+async def get_storage_stats():
+    """Get storage statistics."""
+    try:
+        stats = storage_service.get_stats()
+        return stats
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
