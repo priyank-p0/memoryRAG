@@ -22,9 +22,22 @@ echo "✅ Python and Node.js found"
 echo "📦 Setting up Python backend..."
 cd backend
 
-# Create virtual environment
-python3 -m venv venv
+# Create virtual environment with Python 3.12 for better compatibility
+if command -v python3.12 &> /dev/null; then
+    echo "✅ Using Python 3.12 for better compatibility"
+    python3.12 -m venv venv
+elif command -v python3.11 &> /dev/null; then
+    echo "✅ Using Python 3.11"
+    python3.11 -m venv venv
+else
+    echo "⚠️  Using default Python 3"
+    python3 -m venv venv
+fi
+
 source venv/bin/activate
+
+# Upgrade pip
+pip install --upgrade pip
 
 # Install Python dependencies
 pip install -r requirements.txt
@@ -41,7 +54,7 @@ cd ..
 
 # Setup frontend
 echo "📦 Setting up React frontend..."
-npm install
+npm install --legacy-peer-deps
 
 echo "✅ Setup complete!"
 echo ""
