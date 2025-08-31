@@ -45,17 +45,13 @@
 
 ### Frontend Setup
 
-1. **Navigate to the project root:**
-   ```bash
-   cd ..  # If you're in the backend directory
-   ```
 
-2. **Install dependencies:**
+1. **Install dependencies:**
    ```bash
    npm install
    ```
 
-3. **Start the development server:**
+2. **Start the development server:**
    ```bash
    npm run dev
    ```
