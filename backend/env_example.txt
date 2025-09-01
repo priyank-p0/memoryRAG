@@ -10,3 +10,22 @@ DEBUG=True
 
 # CORS Configuration
 ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+
+# Neo4j Configuration
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=your_neo4j_password_here
+
+# Cache / NLP
+ENABLE_CACHE=True
+CACHE_DIR=.cache
+CACHE_TTL_SECONDS=3600
+ENABLE_SPACY=False
+SPACY_MODEL=en_core_web_sm
+
+# LLM NER
+ENABLE_LLM_NER=False
+LLM_NER_PROVIDER=openai  # openai|anthropic|google
+LLM_NER_MODEL=gpt-4o-mini
+LLM_NER_TEMPERATURE=0.0
+LLM_NER_MAX_REFLECTION_PASSES=1

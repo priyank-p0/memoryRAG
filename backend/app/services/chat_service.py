@@ -12,6 +12,7 @@ from .openai_adapter import OpenAIAdapter
 from .google_adapter import GoogleAdapter
 from .anthropic_adapter import AnthropicAdapter
 from .storage_service import storage_service
+from .knowledge_graph_service import knowledge_graph_service
 
 
 class ChatService:
@@ -129,6 +130,22 @@ class ChatService:
                 response_text=ai_response["content"],
                 session_id=conversation.id
             )
+            
+            # Process interaction for knowledge graph
+            try:
+                kg_result = await knowledge_graph_service.process_chat_interaction(
+                    user_text=request.message,
+                    response_text=ai_response["content"],
+                    session_id=conversation.id,
+                    message_id=str(uuid.uuid4())
+                )
+                # Add knowledge graph info to response usage
+                if not ai_response.get("usage"):
+                    ai_response["usage"] = {}
+                ai_response["usage"]["knowledge_graph"] = kg_result
+            except Exception as kg_error:
+                # Log but don't fail the request if KG processing fails
+                print(f"Knowledge graph processing error: {str(kg_error)}")
             
             # Return response
             return ChatResponse(

@@ -8,6 +8,7 @@ import os
 
 from .config import settings
 from .api.chat import router as chat_router
+from .api.knowledge_graph import router as kg_router
 
 # Load environment variables
 load_dotenv()
@@ -32,6 +33,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(chat_router)
+app.include_router(kg_router)
 
 
 @app.get("/")

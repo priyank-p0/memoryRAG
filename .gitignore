@@ -25,11 +25,10 @@ data/
 # PyInstaller
 *.manifest
 *.spec
-
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
-
+/README_KG.md
 # Unit test / coverage reports
 htmlcov/
 .tox/
